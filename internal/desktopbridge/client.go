@@ -35,7 +35,7 @@ type Config struct {
 
 type Client struct {
 	config     Config
-	proxyID    string
+	bridgeID   string
 	baseURL    string
 	timeoutMS  int
 	logger     Logger
@@ -58,7 +58,7 @@ func LoadConfigFromEnv() (Config, bool) {
 	return cfg, true
 }
 
-func New(config Config, proxyID string, baseURL string, timeoutMS int, logger Logger) *Client {
+func New(config Config, bridgeID string, baseURL string, timeoutMS int, logger Logger) *Client {
 	if logger == nil {
 		logger = log.Default()
 	}
@@ -67,7 +67,7 @@ func New(config Config, proxyID string, baseURL string, timeoutMS int, logger Lo
 	}
 	return &Client{
 		config:     config,
-		proxyID:    strings.TrimSpace(proxyID),
+		bridgeID:   strings.TrimSpace(bridgeID),
 		baseURL:    strings.TrimRight(strings.TrimSpace(baseURL), "/"),
 		timeoutMS:  timeoutMS,
 		logger:     logger,
@@ -75,12 +75,12 @@ func New(config Config, proxyID string, baseURL string, timeoutMS int, logger Lo
 	}
 }
 
-func NewFromEnv(proxyID string, baseURL string, timeoutMS int, logger Logger) (*Client, bool) {
+func NewFromEnv(bridgeID string, baseURL string, timeoutMS int, logger Logger) (*Client, bool) {
 	cfg, ok := LoadConfigFromEnv()
 	if !ok {
 		return nil, false
 	}
-	return New(cfg, proxyID, baseURL, timeoutMS, logger), true
+	return New(cfg, bridgeID, baseURL, timeoutMS, logger), true
 }
 
 func BaseURLFromListenAddr(listenAddr string) string {
@@ -161,7 +161,7 @@ func (c *Client) handleEnvelope(conn net.Conn, envelope map[string]any) {
 	switch name {
 	case "desktop.ready", "agentPlatform.ready", "service.statusChanged:agent-platform":
 		if err := c.requestUpsert(conn); err != nil {
-			c.logger.Printf("[desktop-bridge] failed to upsert ACP proxy: %v", err)
+			c.logger.Printf("[desktop-bridge] failed to upsert ACP bridge: %v", err)
 		}
 	case "desktop.beforeQuit":
 		c.closeOnce.Do(func() {
@@ -171,16 +171,16 @@ func (c *Client) handleEnvelope(conn net.Conn, envelope map[string]any) {
 }
 
 func (c *Client) requestUpsert(conn net.Conn) error {
-	if c.proxyID == "" || c.baseURL == "" {
+	if c.bridgeID == "" || c.baseURL == "" {
 		return nil
 	}
-	id := fmt.Sprintf("proxy_acp_codex_%d", c.requestSeq.Add(1))
+	id := fmt.Sprintf("codex_acp_bridge_%d", c.requestSeq.Add(1))
 	return c.writeEnvelope(conn, map[string]any{
 		"type":   "request",
 		"id":     id,
-		"method": "agentPlatform.upsertAcpProxy",
+		"method": "agentPlatform.upsertAcpBridge",
 		"params": map[string]any{
-			"proxyId":   c.proxyID,
+			"bridgeId":  c.bridgeID,
 			"baseUrl":   c.baseURL,
 			"timeoutMs": c.timeoutMS,
 		},

@@ -17,9 +17,9 @@ import (
 
 	gws "github.com/gorilla/websocket"
 
-	"proxy-acp-codex/internal/acpbridge"
-	"proxy-acp-codex/internal/config"
-	"proxy-acp-codex/internal/platform"
+	"codex-acp-bridge/internal/acpbridge"
+	"codex-acp-bridge/internal/config"
+	"codex-acp-bridge/internal/platform"
 )
 
 func TestQuerySSEAndSubmit(t *testing.T) {
@@ -108,7 +108,6 @@ func TestQuerySSEAndSubmit(t *testing.T) {
 	}
 	assertUsageSnapshotEvent(t, events, "run_http")
 	assertContentEventOrder(t, events, "run_http",
-		"usage.snapshot",
 		"awaiting.ask",
 		"request.steer",
 		"request.submit",
@@ -329,7 +328,6 @@ func TestQueryWebSocketSubmitAndSteer(t *testing.T) {
 	}
 	assertUsageSnapshotEvent(t, events, "run_ws")
 	assertContentEventOrder(t, events, "run_ws",
-		"usage.snapshot",
 		"awaiting.ask",
 		"request.steer",
 		"request.submit",

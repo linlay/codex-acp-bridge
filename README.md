@@ -1,14 +1,14 @@
-# proxy-acp-codex
+# codex-acp-bridge
 
 ## 1. Project Overview
 
-`proxy-acp-codex` bridges Zenmind `agent-platform` ACP CODER agents to the local Codex CLI through ACP. It exposes the HTTP/SSE and WebSocket surface expected by the platform, then translates requests into ACP stdio sessions backed by Codex app-server true streaming.
+`codex-acp-bridge` bridges Zenmind `agent-platform` ACP CODER agents to the local Codex CLI through ACP. It exposes the HTTP/SSE and WebSocket surface expected by the platform, then translates requests into ACP stdio sessions backed by Codex app-server true streaming.
 
 ```text
-webclient -> agent-platform(CODER + runtimeConfig.coderBackend=acp) -> proxy-acp-codex(HTTP/SSE + WS + internal ACP backend) -> Codex CLI app-server
+webclient -> agent-platform(CODER + runtimeConfig.coderBackend=acp) -> codex-acp-bridge(HTTP/SSE + WS + internal ACP backend) -> Codex CLI app-server
 ```
 
-This project currently supports Codex CLI only. The proxy server, platform protocol handling, and ACP conversion layer are bundled into this repository and built into the single `proxy-acp-codex` binary; users do not need to install the sibling `proxy-acp` project or a separate ACP adapter such as `codex-acp`.
+This project currently supports Codex CLI only. The bridge server, platform protocol handling, and ACP conversion layer are bundled into this repository and built into the single `codex-acp-bridge` binary; users do not need to install another ACP adapter such as `codex-acp`.
 
 ## 2. Quick Start
 
@@ -29,7 +29,7 @@ make run
 
 By default the service listens on `http://127.0.0.1:17071` and auth is disabled.
 
-When launched by Zenmind Desktop, the plugin subscribes to Desktop bridge hooks and automatically registers the `codex` ACP proxy with `agent-platform`. Then configure the agent as a CODER agent with `runtimeConfig.acpProxyId: codex`. The platform treats that proxy id as the ACP CODER switch. The platform must send `params.cwd` with each query. `proxy-acp-codex` does not choose a default working directory.
+When launched by Zenmind Desktop, the plugin subscribes to Desktop bridge hooks and automatically registers the `codex` ACP bridge with `agent-platform`. Then configure the agent as a CODER agent with `runtimeConfig.acpBridgeId: codex`. The platform treats that bridge id as the ACP CODER switch. The platform must send `params.cwd` with each query. `codex-acp-bridge` does not choose a default working directory.
 
 ### Test
 
@@ -48,26 +48,26 @@ make release-plugin
 This writes:
 
 ```text
-dist/release/proxy-acp-codex-v0.1.0-darwin-arm64.tar.gz
+dist/release/codex-acp-bridge-v0.1.0-darwin-arm64.tar.gz
 ```
 
-Import that archive from Zenmind Desktop's plugin market. The archive contains the Go proxy binary, service lifecycle scripts, `.env.example`, and `manifest.json` with `kind: "plugin"`. The local Codex CLI remains a machine-level prerequisite and is not bundled.
+Import that archive from Zenmind Desktop's plugin market. The archive contains the Go bridge binary, service lifecycle scripts, `.env.example`, and `manifest.json` with `kind: "plugin"`. The local Codex CLI remains a machine-level prerequisite and is not bundled.
 
 ## 3. Configuration
 
-`proxy-acp-codex` reads dotenv configuration from the `-env` flag, then `PROXY_ACP_ENV`, then `.env` in the working directory when present.
+`codex-acp-bridge` reads dotenv configuration from the `-env` flag, then `CODEX_ACP_BRIDGE_ENV`, then `.env` in the working directory when present.
 
 - `.env.example` is the committed example configuration.
 - `.env` is local-only and must not be committed.
-- `PROXY_ACP_PORT` defaults to `17071`.
-- `PROXY_ACP_ADDR` defaults to `127.0.0.1` when empty. To allow remote access, set it explicitly, for example `PROXY_ACP_ADDR=0.0.0.0`.
-- `PROXY_ACP_AUTH_TOKEN` defaults to empty, which leaves API routes unauthenticated. When set, clients must send `Authorization: Bearer <token>` or `?token=<token>`. For `agent-platform` ACP CODER agents, configure the matching `configs/coder-settings.yml` `acp-proxies.<id>.auth-token`.
+- `CODEX_ACP_BRIDGE_PORT` defaults to `17071`.
+- `CODEX_ACP_BRIDGE_ADDR` defaults to `127.0.0.1` when empty. To allow remote access, set it explicitly, for example `CODEX_ACP_BRIDGE_ADDR=0.0.0.0`.
+- `CODEX_ACP_BRIDGE_AUTH_TOKEN` defaults to empty, which leaves API routes unauthenticated. When set, clients must send `Authorization: Bearer <token>` or `?token=<token>`. For `agent-platform` ACP CODER agents, configure the matching `configs/coder-settings.yml` `acp-bridges.<id>.auth-token`.
 - `CODEX_CLI` defaults to `codex` and may be an absolute path.
 - `CODEX_BACKEND` defaults to `app-server`, which runs `codex app-server --listen stdio://` and forwards real Codex deltas. Set `CODEX_BACKEND=exec-json` only for the legacy `codex exec --json` adapter.
 - `CODEX_APP_SERVER_ARGS` defaults to empty and accepts shell-style argument splitting. Values are passed to `codex app-server` after `--listen stdio://`, for example `CODEX_APP_SERVER_ARGS="--enable network_proxy"`. When the platform sends `model.modelId` or `model.key`, this service appends `-c model=<model>` for that ACP session. When the platform sends `model.reasoningEffort` as `LOW`, `MEDIUM`, `HIGH`, or `EXTRA_HIGH`, this service appends `-c model_reasoning_effort=<low|medium|high|xhigh>`.
 - `CODEX_ARGS` is used only when `CODEX_BACKEND=exec-json`. Values are passed to `codex exec` / `codex exec resume` before the prompt. When the platform sends `model.modelId` or `model.key`, this service appends `--model <model>` for that ACP session. When the platform sends `model.reasoningEffort` as `LOW`, `MEDIUM`, `HIGH`, or `EXTRA_HIGH`, this service appends `-c model_reasoning_effort=<low|medium|high|xhigh>`.
-- `PROXY_ACP_IDLE_TIMEOUT_MS` defaults to `1800000`.
-- `agent-platform` ACP CODER request timeout defaults to `300000ms`; set `configs/coder-settings.yml` `acp-proxies.<id>.timeout-ms` in the platform only when overriding that default.
+- `CODEX_ACP_BRIDGE_IDLE_TIMEOUT_MS` defaults to `1800000`.
+- `agent-platform` ACP CODER request timeout defaults to `300000ms`; set `configs/coder-settings.yml` `acp-bridges.<id>.timeout-ms` in the platform only when overriding that default.
 
 Configuration priority:
 
@@ -75,13 +75,13 @@ Configuration priority:
 built-in defaults < dotenv file < process environment
 ```
 
-Backend processes inherit the `proxy-acp-codex` process environment, so values such as `CODEX_HOME`, `PATH`, and `HOME` come from the Go service process. Commands are launched directly with `exec.Command`, not through a shell, so shell aliases and functions are not inherited.
+Backend processes inherit the `codex-acp-bridge` process environment, so values such as `CODEX_HOME`, `PATH`, and `HOME` come from the Go service process. Commands are launched directly with `exec.Command`, not through a shell, so shell aliases and functions are not inherited.
 
 Runtime dependency model:
 
 ```text
 required on user machine: Codex CLI
-bundled by this project: HTTP/SSE/WS proxy, platform DTOs, ACP bridge, Codex app-server adapter
+bundled by this project: HTTP/SSE/WS bridge, platform DTOs, ACP bridge, Codex app-server adapter
 ```
 
 ## 4. Zenmind Desktop Integration
@@ -89,19 +89,19 @@ bundled by this project: HTTP/SSE/WS proxy, platform DTOs, ACP bridge, Codex app
 This project is designed to match the Zenmind Desktop plugin bridge shape:
 
 1. Import the `make release-plugin` archive from the plugin market.
-2. Initialize and start `proxy-acp-codex` in Desktop.
-3. When Desktop emits `desktop.ready`, `agentPlatform.ready`, or `service.statusChanged:agent-platform`, the plugin sends `agentPlatform.upsertAcpProxy` to register:
+2. Initialize and start `codex-acp-bridge` in Desktop.
+3. When Desktop emits `desktop.ready`, `agentPlatform.ready`, or `service.statusChanged:agent-platform`, the plugin sends `agentPlatform.upsertAcpBridge` to register:
 
 ```yaml
-acp-proxies:
+acp-bridges:
   codex:
     base-url: http://127.0.0.1:17071
     timeout-ms: 300000
 ```
 
-4. Point the target CODER/PROXY agent at `runtimeConfig.acpProxyId: codex`.
+4. Point the target CODER/BRIDGE agent at `runtimeConfig.acpBridgeId: codex`.
 
-The service contract remains `/api/query`, `/api/submit`, `/api/steer`, `/api/interrupt`, and `/ws`. If the Desktop bridge environment variables are absent, the binary still runs as a standalone local proxy and does not modify `agent-platform` configuration.
+The service contract remains `/api/query`, `/api/submit`, `/api/steer`, `/api/interrupt`, and `/ws`. If the Desktop bridge environment variables are absent, the binary still runs as a standalone local bridge and does not modify `agent-platform` configuration.
 
 ## 5. Deployment
 
@@ -111,7 +111,7 @@ Build the local binary:
 make build
 ```
 
-This writes the single executable artifact to `bin/proxy-acp-codex`.
+This writes the single executable artifact to `bin/codex-acp-bridge`.
 
 Build the Windows amd64 binary:
 
@@ -119,12 +119,12 @@ Build the Windows amd64 binary:
 make build-windows-amd64
 ```
 
-This writes `dist/windows-amd64/proxy-acp-codex.exe`.
+This writes `dist/windows-amd64/codex-acp-bridge.exe`.
 
 Run with an explicit dotenv path:
 
 ```bash
-./bin/proxy-acp-codex -env /path/to/proxy-acp-codex.env
+./bin/codex-acp-bridge -env /path/to/codex-acp-bridge.env
 ```
 
 Deployments should inject sensitive values through platform secrets or environment-specific dotenv files outside source control. This repository does not currently include a Dockerfile or container orchestration definition.
@@ -147,10 +147,10 @@ The service writes process logs to stdout/stderr. Capture those streams through 
 - Confirm the configured Codex CLI command exists on `PATH` or is configured by absolute path.
 - Confirm the installed Codex CLI supports `codex app-server --listen stdio://`.
 - Confirm `agent-platform` sends `params.cwd` for each query.
-- Confirm the client sends the configured bearer token when `PROXY_ACP_AUTH_TOKEN` is set.
-- Confirm long-running sessions are not being closed by `PROXY_ACP_IDLE_TIMEOUT_MS`.
+- Confirm the client sends the configured bearer token when `CODEX_ACP_BRIDGE_AUTH_TOKEN` is set.
+- Confirm long-running sessions are not being closed by `CODEX_ACP_BRIDGE_IDLE_TIMEOUT_MS`.
 
-The default Codex backend advertises file read only through ACP. Codex still owns its normal approval and sandbox behavior when it executes work through app-server, so use this proxy only for trusted local/platform access.
+The default Codex backend advertises file read only through ACP. Codex still owns its normal approval and sandbox behavior when it executes work through app-server, so use this bridge only for trusted local/platform access.
 
 ## 7. Compatibility Surface
 
@@ -159,4 +159,4 @@ The default Codex backend advertises file read only through ACP. Codex still own
 - `POST /api/steer` queues a follow-up user prompt on the active ACP run.
 - `POST /api/interrupt` sends ACP `session/cancel`.
 - `GET /ws` accepts platform frames for query, submit, and interrupt.
-# proxy-acp-codex
+# codex-acp-bridge

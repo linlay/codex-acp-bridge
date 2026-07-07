@@ -18,7 +18,7 @@ const (
 	defaultIdleTimeoutMs = int64(30 * time.Minute / time.Millisecond)
 
 	DefaultCodexBackendKey = "codex"
-	SelfBackendCommand     = "__proxy-acp-codex-self__"
+	SelfBackendCommand     = "__codex-acp-bridge-self__"
 	CodexBackendModeArg    = "__codex-cli-acp"
 )
 
@@ -51,7 +51,7 @@ type FileSystemCapabilities struct {
 func Load(path string) (Config, error) {
 	path = strings.TrimSpace(path)
 	if path == "" {
-		path = strings.TrimSpace(os.Getenv("PROXY_ACP_ENV"))
+		path = strings.TrimSpace(os.Getenv("CODEX_ACP_BRIDGE_ENV"))
 	}
 	if path == "" {
 		if _, err := os.Stat(".env"); err == nil {
@@ -70,14 +70,14 @@ func Load(path string) (Config, error) {
 		}
 	}
 	for _, key := range []string{
-		"PROXY_ACP_PORT",
-		"PROXY_ACP_ADDR",
-		"PROXY_ACP_AUTH_TOKEN",
+		"CODEX_ACP_BRIDGE_PORT",
+		"CODEX_ACP_BRIDGE_ADDR",
+		"CODEX_ACP_BRIDGE_AUTH_TOKEN",
 		"CODEX_CLI",
 		"CODEX_BACKEND",
 		"CODEX_ARGS",
 		"CODEX_APP_SERVER_ARGS",
-		"PROXY_ACP_IDLE_TIMEOUT_MS",
+		"CODEX_ACP_BRIDGE_IDLE_TIMEOUT_MS",
 		"http_proxy",
 		"HTTP_PROXY",
 		"https_proxy",
@@ -99,11 +99,11 @@ func Load(path string) (Config, error) {
 }
 
 func fromEnv(values map[string]string) (Config, error) {
-	addr := strings.TrimSpace(envOrDefault(values, "PROXY_ACP_ADDR", defaultAddr))
+	addr := strings.TrimSpace(envOrDefault(values, "CODEX_ACP_BRIDGE_ADDR", defaultAddr))
 	if addr == "" {
 		addr = defaultAddr
 	}
-	port := strings.TrimSpace(envOrDefault(values, "PROXY_ACP_PORT", defaultPort))
+	port := strings.TrimSpace(envOrDefault(values, "CODEX_ACP_BRIDGE_PORT", defaultPort))
 	if err := validatePort(port); err != nil {
 		return Config{}, err
 	}
@@ -138,18 +138,18 @@ func fromEnv(values map[string]string) (Config, error) {
 		}
 	}
 	idleTimeoutMs := defaultIdleTimeoutMs
-	if raw := strings.TrimSpace(values["PROXY_ACP_IDLE_TIMEOUT_MS"]); raw != "" {
+	if raw := strings.TrimSpace(values["CODEX_ACP_BRIDGE_IDLE_TIMEOUT_MS"]); raw != "" {
 		parsed, err := strconv.ParseInt(raw, 10, 64)
 		if err != nil || parsed <= 0 {
-			return Config{}, fmt.Errorf("PROXY_ACP_IDLE_TIMEOUT_MS must be a positive integer")
+			return Config{}, fmt.Errorf("CODEX_ACP_BRIDGE_IDLE_TIMEOUT_MS must be a positive integer")
 		}
 		idleTimeoutMs = parsed
 	}
-	backendEnv := proxyEnv(values)
+	backendEnv := networkProxyEnv(values)
 
 	cfg := Config{
 		ListenAddr:     net.JoinHostPort(addr, port),
-		AuthToken:      strings.TrimSpace(values["PROXY_ACP_AUTH_TOKEN"]),
+		AuthToken:      strings.TrimSpace(values["CODEX_ACP_BRIDGE_AUTH_TOKEN"]),
 		DefaultBackend: DefaultCodexBackendKey,
 		Backends: []BackendConfig{{
 			Key:           DefaultCodexBackendKey,
@@ -162,7 +162,7 @@ func fromEnv(values map[string]string) (Config, error) {
 	return cfg, nil
 }
 
-func proxyEnv(values map[string]string) map[string]string {
+func networkProxyEnv(values map[string]string) map[string]string {
 	env := map[string]string{}
 	for _, key := range []string{"http_proxy", "HTTP_PROXY", "https_proxy", "HTTPS_PROXY"} {
 		if value := strings.TrimSpace(values[key]); value != "" {
@@ -308,7 +308,7 @@ func envOrDefault(values map[string]string, key string, fallback string) string 
 func validatePort(port string) error {
 	parsed, err := strconv.Atoi(port)
 	if err != nil || parsed < 1 || parsed > 65535 {
-		return fmt.Errorf("PROXY_ACP_PORT must be an integer from 1 to 65535")
+		return fmt.Errorf("CODEX_ACP_BRIDGE_PORT must be an integer from 1 to 65535")
 	}
 	return nil
 }

@@ -30,10 +30,10 @@ type QueryRequest struct {
 }
 
 const (
-	PromptMetaPlanningMode = "proxy-acp-codex/planningMode"
-	ACPMetaEventType       = "proxy-acp-codex/eventType"
-	ACPMetaPlanningID      = "proxy-acp-codex/planningId"
-	ACPMetaUsageSnapshot   = "proxy-acp-codex/usageSnapshot"
+	PromptMetaPlanningMode = "codex-acp-bridge/planningMode"
+	ACPMetaEventType       = "codex-acp-bridge/eventType"
+	ACPMetaPlanningID      = "codex-acp-bridge/planningId"
+	ACPMetaUsageSnapshot   = "codex-acp-bridge/usageSnapshot"
 )
 
 type ModelOptions struct {

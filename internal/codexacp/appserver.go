@@ -18,7 +18,7 @@ import (
 
 	"github.com/coder/acp-go-sdk"
 
-	"proxy-acp-codex/internal/platform"
+	"codex-acp-bridge/internal/platform"
 )
 
 type acpPeer interface {
@@ -152,8 +152,8 @@ func (s *appServerSession) initialize(ctx context.Context) error {
 	}
 	return s.rpc.call(ctx, "initialize", map[string]any{
 		"clientInfo": map[string]any{
-			"name":    "proxy-acp-codex",
-			"title":   "proxy-acp-codex",
+			"name":    "codex-acp-bridge",
+			"title":   "codex-acp-bridge",
 			"version": "0.1.0",
 		},
 		"capabilities": map[string]any{

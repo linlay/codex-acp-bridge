@@ -11,11 +11,11 @@ import (
 	"syscall"
 	"time"
 
-	"proxy-acp-codex/internal/acpbridge"
-	"proxy-acp-codex/internal/codexacp"
-	"proxy-acp-codex/internal/config"
-	"proxy-acp-codex/internal/desktopbridge"
-	"proxy-acp-codex/internal/server"
+	"codex-acp-bridge/internal/acpbridge"
+	"codex-acp-bridge/internal/codexacp"
+	"codex-acp-bridge/internal/config"
+	"codex-acp-bridge/internal/desktopbridge"
+	"codex-acp-bridge/internal/server"
 )
 
 func main() {
@@ -26,7 +26,7 @@ func main() {
 		return
 	}
 
-	envPath := flag.String("env", "", "Path to proxy-acp-codex dotenv config")
+	envPath := flag.String("env", "", "Path to codex-acp-bridge dotenv config")
 	flag.Parse()
 
 	cfg, err := config.Load(*envPath)
@@ -49,7 +49,7 @@ func main() {
 
 	errCh := make(chan error, 1)
 	go func() {
-		log.Printf("[proxy-acp-codex] listening on %s", cfg.ListenAddr)
+		log.Printf("[codex-acp-bridge] listening on %s", cfg.ListenAddr)
 		errCh <- srv.ListenAndServe()
 	}()
 
@@ -58,9 +58,9 @@ func main() {
 
 	select {
 	case sig := <-stop:
-		log.Printf("[proxy-acp-codex] shutdown signal: %s", sig)
+		log.Printf("[codex-acp-bridge] shutdown signal: %s", sig)
 	case <-bridgeBeforeQuit:
-		log.Printf("[proxy-acp-codex] desktop bridge requested shutdown")
+		log.Printf("[codex-acp-bridge] desktop bridge requested shutdown")
 	case err := <-errCh:
 		if !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("server failed: %v", err)
@@ -72,6 +72,6 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Printf("[proxy-acp-codex] graceful shutdown failed: %v", err)
+		log.Printf("[codex-acp-bridge] graceful shutdown failed: %v", err)
 	}
 }

@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"proxy-acp-codex/internal/config"
-	"proxy-acp-codex/internal/platform"
+	"codex-acp-bridge/internal/config"
+	"codex-acp-bridge/internal/platform"
 )
 
 type codexDebugModelsPayload struct {

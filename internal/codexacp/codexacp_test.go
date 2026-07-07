@@ -16,7 +16,7 @@ import (
 
 	"github.com/coder/acp-go-sdk"
 
-	"proxy-acp-codex/internal/platform"
+	"codex-acp-bridge/internal/platform"
 )
 
 func TestParseLineCapturesThreadID(t *testing.T) {

@@ -1,4 +1,4 @@
-module proxy-acp-codex
+module codex-acp-bridge
 
 go 1.26
 

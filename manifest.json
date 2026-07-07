@@ -1,9 +1,9 @@
 {
   "pluginApiVersion": 1,
-  "id": "proxy-acp-codex",
-  "name": "Codex ACP Proxy",
+  "id": "codex-acp-bridge",
+  "name": "Codex ACP Bridge",
   "version": "v0.1.0",
-  "description": "Local ACP proxy service that lets Zenmind Desktop control the user's local Codex CLI runtime.",
+  "description": "Local ACP bridge service that lets Zenmind Desktop control the user's local Codex CLI runtime.",
   "platform": {
     "os": "darwin",
     "arch": "arm64"
@@ -11,7 +11,7 @@
   "service": {
     "web": {
       "healthPath": "/healthz",
-      "portEnvKey": "PROXY_ACP_PORT",
+      "portEnvKey": "CODEX_ACP_BRIDGE_PORT",
       "defaultPort": 17071
     },
     "ui": "none"
@@ -20,7 +20,7 @@
     "enabled": true
   },
   "backend": {
-    "entry": "backend/proxy-acp-codex"
+    "entry": "backend/codex-acp-bridge"
   },
   "lifecycle": {
     "start": [
@@ -40,10 +40,10 @@
     }
   ],
   "runtime": {
-    "pidRelativePath": "run/proxy-acp-codex.pid",
-    "logRelativePath": "run/proxy-acp-codex.log",
+    "pidRelativePath": "run/codex-acp-bridge.pid",
+    "logRelativePath": "run/codex-acp-bridge.log",
     "requiredPaths": [
-      "backend/proxy-acp-codex",
+      "backend/codex-acp-bridge",
       "start.sh",
       "stop.sh",
       "deploy.sh",
@@ -64,14 +64,14 @@
   "bridge": {
     "requests": [
       "service.getStatus",
-      "agentPlatform.upsertAcpProxy",
-      "agentPlatform.removeAcpProxy"
+      "agentPlatform.upsertAcpBridge",
+      "agentPlatform.removeAcpBridge"
     ]
   },
   "desktop": {
     "displayOrder": 8,
     "autoStart": "optional",
-    "bundleTopLevelDir": "proxy-acp-codex",
+    "bundleTopLevelDir": "codex-acp-bridge",
     "systemRequirements": [
       "codex"
     ]

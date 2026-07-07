@@ -36,12 +36,12 @@ func TestLoadDefaultsToLocalCodexBackend(t *testing.T) {
 
 func TestLoadAppliesEnvOverrides(t *testing.T) {
 	withCleanEnv(t)
-	t.Setenv("PROXY_ACP_PORT", "4567")
-	t.Setenv("PROXY_ACP_ADDR", "0.0.0.0")
-	t.Setenv("PROXY_ACP_AUTH_TOKEN", "secret")
+	t.Setenv("CODEX_ACP_BRIDGE_PORT", "4567")
+	t.Setenv("CODEX_ACP_BRIDGE_ADDR", "0.0.0.0")
+	t.Setenv("CODEX_ACP_BRIDGE_AUTH_TOKEN", "secret")
 	t.Setenv("CODEX_CLI", "/opt/bin/codex")
 	t.Setenv("CODEX_APP_SERVER_ARGS", `--enable network_proxy -c "model=gpt-5"`)
-	t.Setenv("PROXY_ACP_IDLE_TIMEOUT_MS", "42")
+	t.Setenv("CODEX_ACP_BRIDGE_IDLE_TIMEOUT_MS", "42")
 	t.Setenv("http_proxy", "http://127.0.0.1:8001")
 	t.Setenv("HTTP_PROXY", "http://127.0.0.1:8001")
 	t.Setenv("https_proxy", "http://127.0.0.1:8001")
@@ -87,18 +87,18 @@ func TestLoadDotenvAndProcessEnvPrecedence(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, ".env")
 	if err := os.WriteFile(path, []byte(strings.Join([]string{
-		"PROXY_ACP_PORT=5555",
-		"PROXY_ACP_ADDR=0.0.0.0",
-		"PROXY_ACP_AUTH_TOKEN=from_file",
+		"CODEX_ACP_BRIDGE_PORT=5555",
+		"CODEX_ACP_BRIDGE_ADDR=0.0.0.0",
+		"CODEX_ACP_BRIDGE_AUTH_TOKEN=from_file",
 		"CODEX_CLI=/file/codex",
 		"CODEX_APP_SERVER_ARGS=\"--enable network_proxy\"",
-		"PROXY_ACP_IDLE_TIMEOUT_MS=99",
+		"CODEX_ACP_BRIDGE_IDLE_TIMEOUT_MS=99",
 		"HTTP_PROXY=http://127.0.0.1:8001",
 		"",
 	}, "\n")), 0o600); err != nil {
 		t.Fatalf("write dotenv: %v", err)
 	}
-	t.Setenv("PROXY_ACP_AUTH_TOKEN", "from_env")
+	t.Setenv("CODEX_ACP_BRIDGE_AUTH_TOKEN", "from_env")
 	t.Setenv("CODEX_CLI", "/env/codex")
 	t.Setenv("CODEX_APP_SERVER_ARGS", "--enable network_proxy -c model=gpt-5")
 
@@ -162,18 +162,18 @@ func TestLoadExecJSONBackendUsesCodexArgs(t *testing.T) {
 
 func TestLoadRejectsInvalidPort(t *testing.T) {
 	withCleanEnv(t)
-	t.Setenv("PROXY_ACP_PORT", "70000")
+	t.Setenv("CODEX_ACP_BRIDGE_PORT", "70000")
 	_, err := Load("")
-	if err == nil || !strings.Contains(err.Error(), "PROXY_ACP_PORT") {
+	if err == nil || !strings.Contains(err.Error(), "CODEX_ACP_BRIDGE_PORT") {
 		t.Fatalf("error = %v, want port error", err)
 	}
 }
 
 func TestLoadRejectsInvalidIdleTimeout(t *testing.T) {
 	withCleanEnv(t)
-	t.Setenv("PROXY_ACP_IDLE_TIMEOUT_MS", "nope")
+	t.Setenv("CODEX_ACP_BRIDGE_IDLE_TIMEOUT_MS", "nope")
 	_, err := Load("")
-	if err == nil || !strings.Contains(err.Error(), "PROXY_ACP_IDLE_TIMEOUT_MS") {
+	if err == nil || !strings.Contains(err.Error(), "CODEX_ACP_BRIDGE_IDLE_TIMEOUT_MS") {
 		t.Fatalf("error = %v, want idle timeout error", err)
 	}
 }
@@ -201,15 +201,15 @@ func TestNormalizeNonCodexDefaultsAreRestricted(t *testing.T) {
 func withCleanEnv(t *testing.T) {
 	t.Helper()
 	for _, key := range []string{
-		"PROXY_ACP_ENV",
-		"PROXY_ACP_PORT",
-		"PROXY_ACP_ADDR",
-		"PROXY_ACP_AUTH_TOKEN",
+		"CODEX_ACP_BRIDGE_ENV",
+		"CODEX_ACP_BRIDGE_PORT",
+		"CODEX_ACP_BRIDGE_ADDR",
+		"CODEX_ACP_BRIDGE_AUTH_TOKEN",
 		"CODEX_CLI",
 		"CODEX_BACKEND",
 		"CODEX_ARGS",
 		"CODEX_APP_SERVER_ARGS",
-		"PROXY_ACP_IDLE_TIMEOUT_MS",
+		"CODEX_ACP_BRIDGE_IDLE_TIMEOUT_MS",
 		"http_proxy",
 		"HTTP_PROXY",
 		"https_proxy",

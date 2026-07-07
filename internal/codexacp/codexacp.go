@@ -18,7 +18,7 @@ import (
 
 	"github.com/coder/acp-go-sdk"
 
-	"proxy-acp-codex/internal/platform"
+	"codex-acp-bridge/internal/platform"
 )
 
 var errCodexCLI = errors.New("codex cli returned an error")

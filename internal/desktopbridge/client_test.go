@@ -12,7 +12,7 @@ import (
 )
 
 func TestLoadConfigFromEnvDisabledWhenIncomplete(t *testing.T) {
-	t.Setenv(envPluginID, "proxy-acp-codex")
+	t.Setenv(envPluginID, "codex-acp-bridge")
 	t.Setenv(envBridgeVersion, bridgeVersion)
 	t.Setenv(envBridgePath, "")
 	t.Setenv(envBridgeToken, "token")
@@ -26,7 +26,7 @@ func TestClientSendsHelloAndUpsertOnAgentPlatformReady(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("Unix socket bridge client is only used by the darwin plugin package")
 	}
-	socketDir, err := os.MkdirTemp("/tmp", "proxy-acp-bridge-test-")
+	socketDir, err := os.MkdirTemp("/tmp", "codex-acp-bridge-test-")
 	if err != nil {
 		t.Fatalf("create short socket dir: %v", err)
 	}
@@ -51,7 +51,7 @@ func TestClientSendsHelloAndUpsertOnAgentPlatformReady(t *testing.T) {
 		}
 		var hello map[string]any
 		_ = json.Unmarshal(scanner.Bytes(), &hello)
-		if hello["type"] != "hello" || hello["pluginId"] != "proxy-acp-codex" {
+		if hello["type"] != "hello" || hello["pluginId"] != "codex-acp-bridge" {
 			return
 		}
 		_, _ = conn.Write([]byte(`{"type":"event","name":"agentPlatform.ready","createdAt":"now","data":{}}` + "\n"))
@@ -65,16 +65,16 @@ func TestClientSendsHelloAndUpsertOnAgentPlatformReady(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	client := New(Config{PluginID: "proxy-acp-codex", Version: bridgeVersion, Path: socketPath, Token: "token"}, "codex", "http://127.0.0.1:17071", 300000, nil)
+	client := New(Config{PluginID: "codex-acp-bridge", Version: bridgeVersion, Path: socketPath, Token: "token"}, "codex", "http://127.0.0.1:17071", 300000, nil)
 	go client.Run(ctx)
 
 	select {
 	case request := <-requestCh:
-		if request["method"] != "agentPlatform.upsertAcpProxy" {
+		if request["method"] != "agentPlatform.upsertAcpBridge" {
 			t.Fatalf("method = %v", request["method"])
 		}
 		params := request["params"].(map[string]any)
-		if params["proxyId"] != "codex" || params["baseUrl"] != "http://127.0.0.1:17071" {
+		if params["bridgeId"] != "codex" || params["baseUrl"] != "http://127.0.0.1:17071" {
 			t.Fatalf("unexpected params: %#v", params)
 		}
 	case <-time.After(3 * time.Second):
@@ -86,7 +86,7 @@ func TestClientReconnectsAfterDisconnect(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("Unix socket bridge client is only used by the darwin plugin package")
 	}
-	socketDir, err := os.MkdirTemp("/tmp", "proxy-acp-bridge-reconnect-")
+	socketDir, err := os.MkdirTemp("/tmp", "codex-acp-bridge-reconnect-")
 	if err != nil {
 		t.Fatalf("create short socket dir: %v", err)
 	}
@@ -117,7 +117,7 @@ func TestClientReconnectsAfterDisconnect(t *testing.T) {
 	go acceptOnce(firstHello)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	client := New(Config{PluginID: "proxy-acp-codex", Version: bridgeVersion, Path: socketPath, Token: "token"}, "codex", "http://127.0.0.1:17071", 300000, nil)
+	client := New(Config{PluginID: "codex-acp-bridge", Version: bridgeVersion, Path: socketPath, Token: "token"}, "codex", "http://127.0.0.1:17071", 300000, nil)
 	go client.Run(ctx)
 
 	select {

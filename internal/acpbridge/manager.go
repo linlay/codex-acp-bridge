@@ -16,8 +16,8 @@ import (
 
 	"github.com/coder/acp-go-sdk"
 
-	"proxy-acp-codex/internal/config"
-	"proxy-acp-codex/internal/platform"
+	"codex-acp-bridge/internal/config"
+	"codex-acp-bridge/internal/platform"
 )
 
 type EventSink interface {
@@ -597,7 +597,7 @@ func startBackendSession(ctx context.Context, cfg config.BackendConfig, chatID s
 	go func() {
 		err := cmd.Wait()
 		if err != nil && !sess.isClosed() {
-			log.Printf("[proxy-acp-codex][backend:%s] exited: %v", cfg.Key, err)
+			log.Printf("[codex-acp-bridge][backend:%s] exited: %v", cfg.Key, err)
 		}
 		if sess.onExit != nil {
 			sess.onExit()
@@ -608,7 +608,7 @@ func startBackendSession(ctx context.Context, cfg config.BackendConfig, chatID s
 	defer cancel()
 	if _, err := conn.Initialize(initCtx, acp.InitializeRequest{
 		ProtocolVersion: acp.ProtocolVersionNumber,
-		ClientInfo:      &acp.Implementation{Name: "proxy-acp-codex", Version: "0.1.0"},
+		ClientInfo:      &acp.Implementation{Name: "codex-acp-bridge", Version: "0.1.0"},
 		ClientCapabilities: acp.ClientCapabilities{
 			Fs: acp.FileSystemCapabilities{
 				ReadTextFile:  cfg.Capabilities.ReadTextFile(),

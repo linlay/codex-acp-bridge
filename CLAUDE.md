@@ -2,15 +2,15 @@
 
 ## 1. Project Overview
 
-`proxy-acp-codex` is a Go backend service that adapts Zenmind `agent-platform` PROXY traffic to Codex CLI through ACP. Its boundary is protocol translation and session management; it does not implement model inference, persistence, billing, or user management.
+`codex-acp-bridge` is a Go backend service that adapts Zenmind `agent-platform` BRIDGE traffic to Codex CLI through ACP. Its boundary is protocol translation and session management; it does not implement model inference, persistence, billing, or user management.
 
-The intended runtime contract is intentionally small: the user installs Codex CLI locally, and this repository provides everything else needed for the proxy path. Do not require the sibling `proxy-acp` project or a separate ACP conversion process at runtime.
+The intended runtime contract is intentionally small: the user installs Codex CLI locally, and this repository provides everything else needed for the bridge path. Do not require any separate ACP conversion project at runtime.
 
 Core capabilities:
 
 - Expose platform-compatible HTTP/SSE endpoints.
-- Expose a WebSocket endpoint for platform PROXY frames.
-- Run an internal ACP backend mode for the host Codex CLI app-server from the same `proxy-acp-codex` binary.
+- Expose a WebSocket endpoint for platform BRIDGE frames.
+- Run an internal ACP backend mode for the host Codex CLI app-server from the same `codex-acp-bridge` binary.
 - Start and reuse ACP stdio backend sessions by backend, chat, and working directory.
 - Forward cancellation requests to ACP sessions; generic platform HITL forwarding remains available for backends that request ACP permissions.
 
@@ -30,7 +30,7 @@ This repository defaults to Codex CLI app-server through `codex app-server --lis
 
 The service is split into three main layers:
 
-- `cmd/proxy-acp-codex`: process entrypoint, flag parsing, env config loading, HTTP server lifecycle, graceful shutdown.
+- `cmd/codex-acp-bridge`: process entrypoint, flag parsing, env config loading, HTTP server lifecycle, graceful shutdown.
 - `internal/codexacp`: internal ACP stdio backend mode for running Codex CLI.
 - `internal/server`: HTTP and WebSocket handlers, auth checks, request validation, platform response shaping.
 - `internal/acpbridge`: backend selection, ACP process lifecycle, session reuse, turn execution, permission forwarding, cancellation.
@@ -40,7 +40,7 @@ The service is split into three main layers:
 Request flow:
 
 ```text
-platform client -> internal/server -> internal/acpbridge -> proxy-acp-codex hidden ACP mode -> Codex CLI app-server
+platform client -> internal/server -> internal/acpbridge -> codex-acp-bridge hidden ACP mode -> Codex CLI app-server
 ```
 
 Backend sessions are keyed by backend key, chat id, and working directory. Active runs are tracked separately so interrupt requests can find the session currently handling a run.
@@ -48,7 +48,7 @@ Backend sessions are keyed by backend key, chat id, and working directory. Activ
 ## 4. Directory Structure
 
 ```text
-cmd/proxy-acp-codex/          Service entrypoint.
+cmd/codex-acp-bridge/          Service entrypoint.
 internal/acpbridge/     ACP backend session and turn management.
 internal/codexacp/     Internal Codex ACP backend.
 internal/config/        Dotenv config loading and normalization.
@@ -84,8 +84,8 @@ ACP session state lives in `internal/acpbridge`:
 
 Authentication:
 
-- If `PROXY_ACP_AUTH_TOKEN` is empty, API routes are unauthenticated.
-- If `PROXY_ACP_AUTH_TOKEN` is set, clients must pass `Authorization: Bearer <token>` or `?token=<token>`.
+- If `CODEX_ACP_BRIDGE_AUTH_TOKEN` is empty, API routes are unauthenticated.
+- If `CODEX_ACP_BRIDGE_AUTH_TOKEN` is set, clients must pass `Authorization: Bearer <token>` or `?token=<token>`.
 
 Endpoints:
 
@@ -145,7 +145,7 @@ make clean
 - `CODEX_BACKEND` defaults to `app-server`; `exec-json` is legacy fallback.
 - `CODEX_APP_SERVER_ARGS` configures extra `codex app-server` arguments using shell-style splitting.
 - `CODEX_ARGS` configures extra `codex exec` arguments only when `CODEX_BACKEND=exec-json`.
-- `PROXY_ACP_ADDR` defaults to local-only `127.0.0.1`; remote access requires an explicit value such as `0.0.0.0`.
+- `CODEX_ACP_BRIDGE_ADDR` defaults to local-only `127.0.0.1`; remote access requires an explicit value such as `0.0.0.0`.
 - Backend processes inherit the service environment.
 - Codex defaults to ACP file read only. Codex owns its normal approval and sandbox behavior inside app-server.
 - WebSocket origin checks currently allow all origins.

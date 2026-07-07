@@ -1,4 +1,4 @@
-APP_NAME := proxy-acp-codex
+APP_NAME := codex-acp-bridge
 BIN_DIR := bin
 DIST_DIR := dist
 RELEASE_DIR := $(DIST_DIR)/release
@@ -12,11 +12,11 @@ ENV ?= .env
 
 build:
 	mkdir -p $(BIN_DIR)
-	go build -o $(BIN_DIR)/$(APP_NAME) ./cmd/proxy-acp-codex
+	go build -o $(BIN_DIR)/$(APP_NAME) ./cmd/codex-acp-bridge
 
 build-windows-amd64:
 	mkdir -p $(DIST_DIR)/windows-amd64
-	GOOS=windows GOARCH=amd64 go build -o $(DIST_DIR)/windows-amd64/$(APP_NAME).exe ./cmd/proxy-acp-codex
+	GOOS=windows GOARCH=amd64 go build -o $(DIST_DIR)/windows-amd64/$(APP_NAME).exe ./cmd/codex-acp-bridge
 
 release-program: build
 	rm -rf $(DIST_DIR)/bundle
@@ -36,7 +36,7 @@ release-program: build
 release-plugin: release-program
 
 run:
-	go run ./cmd/proxy-acp-codex -env $(ENV)
+	go run ./cmd/codex-acp-bridge -env $(ENV)
 
 test:
 	go test ./...

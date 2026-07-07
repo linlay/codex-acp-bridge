@@ -12,9 +12,9 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"proxy-acp-codex/internal/acpbridge"
-	"proxy-acp-codex/internal/config"
-	"proxy-acp-codex/internal/platform"
+	"codex-acp-bridge/internal/acpbridge"
+	"codex-acp-bridge/internal/config"
+	"codex-acp-bridge/internal/platform"
 )
 
 type Server struct {
@@ -92,7 +92,7 @@ func (s *Server) handleQuery(w http.ResponseWriter, r *http.Request) {
 	defer writer.Close()
 
 	if err := s.manager.Execute(r.Context(), req, writer); err != nil {
-		log.Printf("[proxy-acp-codex] query failed run=%s: %v", req.RunID, err)
+		log.Printf("[codex-acp-bridge] query failed run=%s: %v", req.RunID, err)
 	}
 	_ = writer.WriteDone()
 }
@@ -151,7 +151,7 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 	connCtx, cancel := context.WithCancel(r.Context())
 	defer cancel()
-	_ = conn.WriteJSON(pushFrame{Frame: "push", Type: "connected", Data: map[string]any{"sessionId": "proxy-acp-codex"}})
+	_ = conn.WriteJSON(pushFrame{Frame: "push", Type: "connected", Data: map[string]any{"sessionId": "codex-acp-bridge"}})
 
 	for {
 		_, data, err := conn.ReadMessage()
@@ -191,7 +191,7 @@ func (s *Server) wsQuery(ctx context.Context, conn *websocket.Conn, frame reques
 	sink := &wsSink{conn: conn, id: frame.ID, streamID: streamID}
 	writeWS(conn, responseFrame{Frame: "response", Type: frame.Type, ID: frame.ID, Code: 0, Msg: "success", Data: map[string]any{"runId": req.RunID, "streamId": streamID}})
 	if err := s.manager.Execute(ctx, req, sink); err != nil {
-		log.Printf("[proxy-acp-codex][ws] query failed run=%s: %v", req.RunID, err)
+		log.Printf("[codex-acp-bridge][ws] query failed run=%s: %v", req.RunID, err)
 	}
 	writeWS(conn, streamFrame{Frame: "stream", ID: frame.ID, StreamID: streamID, Reason: "done"})
 }
