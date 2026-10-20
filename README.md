@@ -5,7 +5,7 @@
 `codex-acp-bridge` bridges Zenmind `agent-platform` ACP CODER agents to the local Codex CLI through ACP. It exposes the HTTP/SSE and WebSocket surface expected by the platform, then translates requests into ACP stdio sessions backed by Codex app-server true streaming.
 
 ```text
-webclient -> agent-platform(CODER + runtimeConfig.coderBackend=acp) -> codex-acp-bridge(HTTP/SSE + WS + internal ACP backend) -> Codex CLI app-server
+webclient -> agent-platform(CODER + runtimeConfig.acpBridgeId=codex) -> codex-acp-bridge(HTTP/SSE + WS + internal ACP backend) -> Codex CLI app-server
 ```
 
 This project currently supports Codex CLI only. The bridge server, platform protocol handling, and ACP conversion layer are bundled into this repository and built into the single `codex-acp-bridge` binary; users do not need to install another ACP adapter such as `codex-acp`.
@@ -48,10 +48,10 @@ make release-plugin
 This writes:
 
 ```text
-dist/release/codex-acp-bridge-v0.1.0-darwin-arm64.tar.gz
+dist/release/codex-acp-bridge-v0.1.1-darwin-arm64.zip
 ```
 
-Import that archive from Zenmind Desktop's plugin market. The archive contains the Go bridge binary, service lifecycle scripts, `.env.example`, and `manifest.json` with `kind: "plugin"`. The local Codex CLI remains a machine-level prerequisite and is not bundled.
+Import that archive from Zenmind Desktop's plugin market. The archive contains the Go bridge binary, service lifecycle scripts, `.env.example`, and `manifest.json` with `pluginApiVersion: 1`. The local Codex CLI remains a machine-level prerequisite and is not bundled.
 
 ## 3. Configuration
 
@@ -160,3 +160,11 @@ The default Codex backend advertises file read only through ACP. Codex still own
 - `POST /api/interrupt` sends ACP `session/cancel`.
 - `GET /ws` accepts platform frames for query, submit, and interrupt.
 # codex-acp-bridge
+
+### macOS plugin release contract
+
+`make release-plugin` creates a single-root ZIP for Desktop import, with explicit Darwin/arm64 compilation. Use `make release-plugin ARCH=amd64` for Intel Macs. The ZIP manifest records the selected architecture and version; only the binary, lifecycle scripts, manifest and example config are included. Local `.env`, credentials and runtime files are excluded. Windows plugin packaging is not supported yet.
+
+Desktop uses `agentPlatform.upsertAcpBridge` with `bridgeId`, `baseUrl` and `timeoutMs`; Platform uses `acp-bridges` and agents use `runtimeConfig.acpBridgeId`. Old `acp-proxies` / `acpProxyId` are not a fallback. Desktop plugin registration uses a Unix socket; inference still uses loopback HTTP/WebSocket, with internal ACP over stdio. Host rejection is reported in the service log.
+
+Registration sends the bridge auth token over the authenticated local Desktop socket. Configuration changes require restarting Agent Platform; the bridge logs the restart requirement. Repeated unchanged registration does not rewrite the Platform configuration.

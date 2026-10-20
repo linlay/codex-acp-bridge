@@ -44,6 +44,7 @@ func main() {
 	var bridgeBeforeQuit <-chan struct{}
 	if bridgeClient, ok := desktopbridge.NewFromEnv("codex", desktopbridge.BaseURLFromListenAddr(cfg.ListenAddr), 300000, log.Default()); ok {
 		bridgeBeforeQuit = bridgeClient.BeforeQuit()
+		bridgeClient.SetAuthToken(cfg.AuthToken)
 		go bridgeClient.Run(bridgeCtx)
 	}
 

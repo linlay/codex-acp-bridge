@@ -174,7 +174,7 @@ func TestManagerPlanHITLApproveContinuesWithoutPlanningMode(t *testing.T) {
 	resp, ok := m.Submit(platform.SubmitRequest{
 		RunID:      "run_plan_hitl_approve",
 		AwaitingID: awaitingID,
-		Params:     []map[string]any{{"id": plan["id"], "planningId": plan["planningId"], "decision": "approve"}},
+		Param:      map[string]any{"decision": "approve"},
 	})
 	if !ok || !resp.Accepted {
 		t.Fatalf("submit response = %#v ok=%v", resp, ok)
@@ -220,11 +220,10 @@ func TestManagerPlanHITLRejectContinuesWithPlanningModeAndReason(t *testing.T) {
 
 	awaiting := waitForAwaiting(t, sink, "plan")
 	awaitingID, _ := awaiting.Payload["awaitingId"].(string)
-	plan, _ := awaiting.Payload["plan"].(map[string]any)
 	resp, ok := m.Submit(platform.SubmitRequest{
 		RunID:      "run_plan_hitl_reject",
 		AwaitingID: awaitingID,
-		Params:     []map[string]any{{"id": plan["id"], "planningId": plan["planningId"], "decision": "reject", "reason": "请增加验证步骤"}},
+		Param:      map[string]any{"decision": "reject", "reason": "请增加验证步骤"},
 	})
 	if !ok || !resp.Accepted {
 		t.Fatalf("submit response = %#v ok=%v", resp, ok)

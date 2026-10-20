@@ -149,3 +149,7 @@ make clean
 - Backend processes inherit the service environment.
 - Codex defaults to ACP file read only. Codex owns its normal approval and sandbox behavior inside app-server.
 - WebSocket origin checks currently allow all origins.
+
+## macOS Desktop plugin release
+
+`make release-plugin` builds a Darwin binary and a single-root ZIP with `pluginApiVersion: 1`. `ARCH=amd64` selects Intel Macs; default is arm64. Use only canonical `agentPlatform.upsertAcpBridge`, `bridgeId`, `acp-bridges`, and `runtimeConfig.acpBridgeId`. Windows plugin delivery is deferred. Never package real `.env` or runtime state.
